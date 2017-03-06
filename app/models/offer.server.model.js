@@ -1,6 +1,7 @@
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
+
 var OfferSchema = new Schema({
 	name: {
     type:String,
