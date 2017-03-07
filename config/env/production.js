@@ -8,7 +8,7 @@ module.exports = {
 
 	// product job
 
-	schedule_product:'7 11 * * *',
+	schedule_product:'0 10 * * *',
 
 	// end product job
 };
