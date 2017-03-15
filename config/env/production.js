@@ -1,14 +1,14 @@
 module.exports = {
 
 	// Development configuration options
-	db:'mongodb://teste1:teste1234@ds145138.mlab.com:45138/heroku_l4pp17t7',
+	db:'mongodb://bdeciding:rovel1954@ds035776.mlab.com:35776/heroku_5lt8spw4',
 	// db:'mongodb://127.0.0.1:27017/bd_dev',
 	timeRequest:0,
 	sessionSecret:'productSessionSecret',
 
 	// product job
 
-	schedule_product:'0 10 * * *',
+	schedule_product:'10 0 * * *',
 
 	// end product job
 };

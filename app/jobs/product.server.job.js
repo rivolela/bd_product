@@ -35,7 +35,7 @@ function start(arg,next){
 	    // step_05 >> get products
 	    function(callback){
 	    	offerController.getOffersBD({},function(productsArray){
-				console.log("productsArray >>",productsArray);
+				console.log("productsArray >>",productsArray.length);
 				callback(null,productsArray);
 			});
 	    },

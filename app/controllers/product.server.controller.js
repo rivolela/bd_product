@@ -41,50 +41,34 @@ var setReviewsCounterProduct = function(product,next){
  * @return {productsArray}
  */
 var saveArray = function(currentItem,productsArray,next){
-
+	
 	try{
 		if(currentItem < productsArray.length){
 
-			var product = productsArray[currentItem];
-
-			setReviewsCounterProduct(product,function(productWithReviews){
-				
-				if(productWithReviews.totalReviews > 0){
-
-					var saveProduct = new Product();
-					saveProduct.name = productWithReviews.name;
-					saveProduct.ean = productWithReviews.ean;
-					saveProduct.image = productWithReviews.image;
-					saveProduct.manufacturer = productWithReviews.manufacturer;
-					saveProduct.countSad = productWithReviews.countSad;
-					saveProduct.countHappy = productWithReviews.countHappy;
-					saveProduct.totalReviews = productWithReviews.totalReviews;
-					saveProduct.departamentBD = productWithReviews.departamentBD;
-
-					if(productWithReviews.image_medium !== undefined){
-						saveProduct.image = productWithReviews.image_medium;
-					}else{
-						saveProduct.image = productWithReviews.image_large;
-					}
-
-					var updateFields = {
-						name: saveProduct.name,
-						ean: saveProduct.ean,
-						image: saveProduct.image,
-						manufacturer: saveProduct.manufacturer,
-						countSad: saveProduct.countSad,
-						countHappy: saveProduct.countHappy,
-						totalReviews: saveProduct.totalReviews,
-						departamentBD: saveProduct.departamentBD,
-						updated:Date.now 
-					};
-
-  					updateProduct(saveProduct,updateFields,function(){
-						saveArray(currentItem+1,productsArray,next);
-					});
+			async.waterfall([
+			    // step_01 >> get total of reviews of the product
+			    function(callback){
+			    	setReviewsCounterProduct(productsArray[currentItem],function(productWithReviews){
+						callback(null,productWithReviews);
+			    	});
+			    },
+			    // step_02 >> save products
+			    function(productWithReviews,callback){
+			    	if(productWithReviews.totalReviews > 0){
+			    		saveAndUpdateProduct(productWithReviews,function(product){
+							callback(null,'arg');
+						});
+			    	}else{
+			    		callback(null,'arg');
+			    	}
+			    }
+			], function (err, result) {
+				if(err){
+					console.log("err >>",err);
+					return next(err);
 				}else{
 					saveArray(currentItem+1,productsArray,next);
-				}				
+				}
 			});
 
 		}else{
@@ -94,6 +78,7 @@ var saveArray = function(currentItem,productsArray,next){
 		console.log('An error has occurred: ' + e.message);
 	}
 };
+
 
 var saveArrayProducts = function(currentItem,productsArray,next){
 
@@ -155,6 +140,61 @@ var saveProductBD = function(data,next){
 };
 
 
+var saveAndUpdateProduct = function(data,next){
+
+	try{
+		var product = new Product ({
+			name:data.name,
+  			ean:data.ean,
+  			departamentBD: data.departamentBD,
+			countSad: data.countSad,
+  			countHappy: data.countHappy,
+  			totalReviews: data.totalReviews,
+  			manufacturer: data.manufacturer,
+  			nameURL:data.name,
+		});
+
+		if(data.image_medium === undefined){
+			product.image = data.image_large;
+		}else{
+			product.image = data.image_medium;
+		}
+
+		console.log("product.image >>",product.image);
+  	
+	  	product.save(function(err){
+
+			if(err){
+
+				console.log("product not saved >>",err);
+
+				var updateFields = {
+					// image: product.image,
+					// manufacturer: product.manufacturer,
+					countSad: product.countSad,
+					countHappy: product.countHappy,
+					totalReviews: product.totalReviews,
+					// departamentBD: product.departamentBD,
+					updated:new Date()
+				};
+
+				updateProduct(product,updateFields,function(productUpdated){
+					console.log("callback updateProduct");
+					return next(productUpdated);
+				});
+	
+			}else{
+				console.log("product saved");
+				return next();
+			}
+		});
+
+	}catch(e){
+		console.log('An error has occurred: ' + e.message);
+	}
+};
+
+
 var deleteProductBD = function(data,next){
 
 	product = new Product(data);
@@ -202,7 +242,7 @@ var getProductsBD = function(query,next){
 
 /**
  * [updateProduct description]
- * @param  {Product}   product        	[description]
+ * @param  {Product}   product      [description]
  * @param  {String}  updateFields 	[description]
  * @param  {Function} next         	[description]
  * @return {Product}                [Product updated]
@@ -211,14 +251,14 @@ var updateProduct = function(product,updateFields,next){
 
 	query = {ean:product.ean};
 
-	var options = {new:true,upsert:true,setDefaultsOnInsert:true};
+	var options = {new:true,upsert:false,setDefaultsOnInsert:true};
 
     Product.findOneAndUpdate(query,{"$set":updateFields}, options, function(err, productUpdated){
 		if(err){
 			console.log("product not updated >>",err);
 			return next(err);
 		}else{
-			console.log("product updated");
+			console.log("product updated >>");
 			return next(productUpdated);
 		}
 	});
@@ -237,5 +277,7 @@ exports.saveProductWithReviews = saveProductWithReviews;
 exports.saveArrayProducts = saveArrayProducts;
 exports.updateProduct = updateProduct;
 exports.setReviewsCounterProduct = setReviewsCounterProduct;
+exports.saveAndUpdateProduct = saveAndUpdateProduct;
+
 
 

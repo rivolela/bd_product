@@ -1,13 +1,19 @@
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
+var StringUtile = require('../utile/string.server.utile.js');
+var stringUtile = new StringUtile();
+var uniqueValidator = require('mongoose-unique-validator');
 
 var ProductSchema = new Schema({
   name: {
     type:String,
     trim: true,
-    index: true 
   },
-  ean: Number,
+  ean: {
+    type:Number,
+    required: true, 
+    unique: true
+  },
   image: String,
   // category: {
   //   type:String,
@@ -16,7 +22,6 @@ var ProductSchema = new Schema({
   // merchantProductId: String,
   manufacturer:{
     type:String,
-    index: true
   },
   // advertiser: String,
   created:{
@@ -31,8 +36,13 @@ var ProductSchema = new Schema({
     type:Date,
     default: Date.now
   },
+  nameURL: {
+    type:String,
+    set: stringUtile.makeslug
+  },
 });
 
+ProductSchema.plugin(uniqueValidator,{ type:'ean-unique-validator'});
 
 module.exports = mongoose.model('Product', ProductSchema);
 
